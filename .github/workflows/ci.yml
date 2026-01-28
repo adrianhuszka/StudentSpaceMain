@@ -20,12 +20,15 @@ jobs:
         working-directory: StudentSpaceAPI
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       
       - uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
+          cache-dependency-path: StudentSpaceAPI/pom.xml
       
       - name: Run tests
         run: ./mvnw test
@@ -41,12 +44,14 @@ jobs:
         working-directory: StudentSpace
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: StudentSpace/package-lock.json
+          cache-dependency-path: '**/package-lock.json'
       
       - name: Install dependencies
         run: npm ci
@@ -64,6 +69,8 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       
       - name: Log in to Container Registry
         uses: docker/login-action@v3
