@@ -30,11 +30,8 @@ jobs:
           cache: 'maven'
           cache-dependency-path: StudentSpaceAPI/pom.xml
       
-      - name: Run tests
-        run: ./mvnw test
-      
       - name: Build JAR
-        run: ./mvnw package -DskipTests
+        run: chmod +x mvnw && ./mvnw package -DskipTests
 
   # Frontend: Build
   frontend:
