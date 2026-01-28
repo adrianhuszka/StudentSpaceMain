@@ -145,32 +145,37 @@ Bármelyik cloud provider működik ahol futtathatók konténerek:
 
 ## GitHub Actions
 
-Példa workflow ami buildet és tesztet futtat minden push-ra:
-
-```yaml
-name: CI
-
-on: [push, pull_request]
-
-jobs:
-  backend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-      - run: cd StudentSpaceAPI && ./mvnw test
-
-  frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: cd StudentSpace && npm ci && npm run build
-```
+A CI/CD workflow minden push-ra és PR-ra fut. A `main`/`master` branch-re történő push automatikusan buildeli és pusholja a Docker image-eket a GitHub Container Registry-be (GHCR).
 
 A fájl helye: `.github/workflows/ci.yml`
+
+### Mit csinál a workflow?
+
+1. **Backend job** - Teszteli és buildeli a Spring Boot alkalmazást
+2. **Frontend job** - Buildeli az Angular alkalmazást  
+3. **Docker build job** - Ha a tesztek sikeresek és push történt main/master-re:
+   - Bejelentkezik a GHCR-be
+   - Buildeli és pusholja mindkét Docker image-et
+
+### Docker image-ek elérése
+
+A push után a Docker image-ek elérhetők:
+- Backend: `ghcr.io/<github-felhasználó>/educloud-backend:latest`
+- Frontend: `ghcr.io/<github-felhasználó>/educloud-frontend:latest`
+
+Pull és futtatás:
+```bash
+docker pull ghcr.io/<github-felhasználó>/educloud-backend:latest
+docker pull ghcr.io/<github-felhasználó>/educloud-frontend:latest
+```
+
+### Helyi tesztelés Docker-rel
+
+```bash
+# Az egész stack indítása
+docker-compose up --build
+
+# Vagy csak egy service buildelése
+docker-compose build backend
+docker-compose build frontend
+```
