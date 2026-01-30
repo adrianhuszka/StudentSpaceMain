@@ -1,6 +1,0 @@
-[submodule "StudentSpace"]
-	path = StudentSpace
-	url = https://github.com/adrianhuszka/StudentSpace.git
-[submodule "StudentSpaceAPI"]
-	path = StudentSpaceAPI
-	url = https://github.com/adrianhuszka/StudentSpaceAPI.git
