@@ -1,26 +1,71 @@
-version: "3.8"
-
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-StudentSpace}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-StudentSpace}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
   backend:
     image: ghcr.io/adrianhuszka/student-space-backend:latest
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://${POSTGRES_HOST:-postgres}:5432/${POSTGRES_DB:-student_space}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${POSTGRES_HOST:-postgres}:5432/${POSTGRES_DB:-StudentSpace}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      JWT_SECRET: ${JWT_SECRET:-mySecretKeyForJWTTokenGenerationPleaseChangeThisInProduction1234567890}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4000/}
+      APP_SECURITY_ALLOWED_ORIGINS: ${APP_SECURITY_ALLOWED_ORIGINS:-http://localhost:4200,http://localhost:4000,https://student-space.pollak.info}
+      APP_SECURITY_ALLOWED_HOSTS: ${APP_SECURITY_ALLOWED_HOSTS:-localhost,127.0.0.1,backend,api-student-space.pollak.info,student-space.pollak.info}
+      APP_MAIL_FROM: ${APP_MAIL_FROM:-noreply@pollakszentes.hu}
+      MAIL_HOST: ${MAIL_HOST:-smtp-mail.outlook.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-noreply@pollakszentes.hu}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-VYptv226}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
+      MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-true}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-student-space}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-zqxDhuUZyUKbh1VGODmhwZEPsWbfbpfW}
+      KEYCLOAK_REDIRECT_URI: ${KEYCLOAK_REDIRECT_URI:-http://localhost:8080/login/oauth2/code/keycloak}
+      KEYCLOAK_AUTHORIZATION_URI: ${KEYCLOAK_AUTHORIZATION_URI:-https://keycloak.pollak.info/realms/master/protocol/openid-connect/auth}
+      KEYCLOAK_TOKEN_URI: ${KEYCLOAK_TOKEN_URI:-https://keycloak.pollak.info/realms/master/protocol/openid-connect/token}
+      KEYCLOAK_USERINFO_URI: ${KEYCLOAK_USERINFO_URI:-https://keycloak.pollak.info/realms/master/protocol/openid-connect/userinfo}
+      KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI:-https://keycloak.pollak.info/realms/master/protocol/openid-connect/certs}
     ports:
-      - "8080:8080"
+      - "${BACKEND_PORT:-8080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
+    restart: unless-stopped
 
   frontend:
     image: ghcr.io/adrianhuszka/student-space-frontend:latest
     environment:
-      API_URL: http://backend:8080
+      PORT: 4000
+      API_URL: ${API_URL:-http://backend:8080/api/v1}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      FRONTEND_ALLOWED_HOSTS: ${FRONTEND_ALLOWED_HOSTS:-localhost,127.0.0.1,student-space.pollak.info,api-student-space.pollak.info}
     ports:
-      - "4000:4000"
+      - "${FRONTEND_PORT:-4000}:4000"
     depends_on:
-      - backend
+      backend:
+        condition: service_started
+    restart: unless-stopped
 
 volumes:
   postgres_data:
